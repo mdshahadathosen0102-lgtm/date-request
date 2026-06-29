@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Request 💕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #fce4ec;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            min-height: 380px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .card.active {
+            display: flex;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #d81b60;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .btn-yes, .btn-next {
+            background-color: #e91e63;
+            color: white;
+        }
+
+        .btn-yes:hover, .btn-next:hover {
+            background-color: #c2185b;
+            transform: scale(1.05);
+        }
+
+        .btn-no {
+            background-color: #ff8a80;
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 138, 128, 0.4);
+            cursor: not-allowed;
+        }
+
+        .btn-no:hover {
+            background-color: #ff5252;
+            transform: scale(1.05);
+        }
+
+        input[type="date"], input[type="time"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0 20px 0;
+            border: 2px solid #f8bbd0;
+            border-radius: 10px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .summary {
+            background: #fff0f5;
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .summary p {
+            margin: 8px 0;
+            font-size: 16px;
+            color: #444;
+        }
+
+        .footer-note {
+            font-size: 11px;
+            color: #888;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .status-msg {
+            font-size: 12px;
+            color: #4caf50;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: Proposal -->
+    <div class="card active" id="screen1">
+        <h2>🌸 Will you go on a date with me? 🌸</h2>
+        <div class="btn-container">
+            <button class="btn-yes" onclick="nextScreen(2)">YES 🤍</button>
+            <button class="btn-no" onclick="event.preventDefault();">NO 🤪</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: Date & Time -->
+    <div class="card" id="screen2">
+        <h2>🐾 So... when are you free?</h2>
+        <label for="date-input">Pick a day:</label>
+        <input type="date" id="date-input" required>
+        
+        <label for="time-input">What time?:</label>
+        <input type="time" id="time-input" required>
+        
+        <button class="btn-next" onclick="saveDateTime()">Set the date 💖</button>
+    </div>
+
+    <!-- SCREEN 3: Food Choice -->
+    <div class="card" id="screen3">
+        <h2>🍽️✨ What are we feeling?</h2>
+        <label for="food-select">Choose food item:</label>
+        <select id="food-select">
+            <option value="🍕 Pizza">🍕 Pizza</option>
+            <option value="🍔 Burgers">🍔 Burgers</option>
+            <option value="☕ Coffee">☕ Coffee</option>
+            <option value="🫖 Tea">🫖 Tea</option>
+            <option value="🥣 Fuchka">🥣 Fuchka</option>
+        </select>
+        <button class="btn-next" onclick="showSummaryAndSend()">Next 💗</button>
+    </div>
+
+    <!-- SCREEN 4: Confirmation -->
+    <div class="card" id="screen4">
+        <h2>YAY!! 💕</h2>
+        <div class="summary">
+            <p>📅 <span id="final-date"></span></p>
+            <p>⏰ <span id="final-time"></span></p>
+            <p>🍽️ <span id="final-food"></span></p>
+        </div>
+        <h3>I can't wait to see you! 🌷✨</h3>
+        <p id="status" class="status-msg">Sending details to Shahadat... 💌</p>
+        <p class="footer-note">(normal guys send texts, I made a website. I'm not like other guys xx)</p>
+    </div>
+
+    <script>
+        function nextScreen(screenNum) {
+            document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+            document.getElementById('screen' + screenNum).classList.add('active');
+        }
+
+        let selectedDate = "";
+        let selectedTime = "";
+
+        function saveDateTime() {
+            const dateVal = document.getElementById('date-input').value;
+            const timeVal = document.getElementById('time-input').value;
+
+            if(!dateVal || !timeVal) {
+                alert("অনুগ্রহ করে ডেট এবং টাইম সিলেক্ট করুন! 😊");
+                return;
+            }
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            selectedDate = new Date(dateVal).toLocaleDateString('en-US', options);
+            
+            let [hours, minutes] = timeVal.split(':');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            selectedTime = hours + ':' + minutes + ' ' + ampm;
+
+            nextScreen(3);
+        }
+
+        function showSummaryAndSend() {
+            const foodVal = document.getElementById('food-select').value;
+            
+            document.getElementById('final-date').innerText = selectedDate;
+            document.getElementById('final-time').innerText = selectedTime;
+            document.getElementById('final-food').innerText = foodVal;
+
+            // স্ক্রিন ৪ এ নিয়ে যাওয়া
+            nextScreen(4);
+
+            // ইমেইলে ডেটা পাঠানোর ফর্ম ডাটা তৈরি
+            const formData = new FormData();
+            formData.append("Date", selectedDate);
+            formData.append("Time", selectedTime);
+            formData.append("Food Choice", foodVal);
+            formData.append("Message", "I accepted your date request! 🥰");
+
+            // Formspree API এর মাধ্যমে আপনার ইমেইলে সরাসরি সাবমিট করা
+            fetch("https://formspree.io/f/xknpqqbk", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('status').innerText = "Details sent successfully! 💖";
+                } else {
+                    document.getElementById('status').innerText = "Sent! (Can't wait) ✨";
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = "Sent! (Can't wait) ✨";
+                console.log(error);
+            });
+        }
+    </script>
+</body>
+</html>
