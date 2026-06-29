@@ -29,7 +29,7 @@
             text-align: center;
             width: 90%;
             max-width: 400px;
-            min-height: 380px;
+            min-height: 400px;
             display: none;
             flex-direction: column;
             justify-content: center;
@@ -94,14 +94,21 @@
             transform: scale(1.05);
         }
 
-        input[type="date"], input[type="time"], select {
+        input[type="date"], input[type="time"], input[type="text"], select {
             width: 100%;
             padding: 12px;
-            margin: 10px 0 20px 0;
+            margin: 5px 0 15px 0;
             border: 2px solid #f8bbd0;
             border-radius: 10px;
             outline: none;
             font-size: 16px;
+        }
+
+        label {
+            align-self: flex-start;
+            font-size: 14px;
+            color: #555;
+            font-weight: 600;
         }
 
         .summary {
@@ -115,7 +122,7 @@
 
         .summary p {
             margin: 8px 0;
-            font-size: 16px;
+            font-size: 15px;
             color: #444;
         }
 
@@ -157,9 +164,9 @@
         <button class="btn-next" onclick="saveDateTime()">Set the date 💖</button>
     </div>
 
-    <!-- SCREEN 3: Food Choice -->
+    <!-- SCREEN 3: Food & Location Choice -->
     <div class="card" id="screen3">
-        <h2>🍽️✨ What are we feeling?</h2>
+        <h2>🍽️✨ What are we doing?</h2>
         <label for="food-select">Choose food item:</label>
         <select id="food-select">
             <option value="🍕 Pizza">🍕 Pizza</option>
@@ -168,16 +175,40 @@
             <option value="🫖 Tea">🫖 Tea</option>
             <option value="🥣 Fuchka">🥣 Fuchka</option>
         </select>
-        <button class="btn-next" onclick="showSummaryAndSend()">Next 💗</button>
+
+        <label for="location-select">Choose a place:</label>
+        <select id="location-select">
+            <option value="A Cozy Cafe">☕ A Cozy Cafe</option>
+            <option value="Rooftop Restaurant">🏙️ Rooftop Restaurant</option>
+            <option value="Street Food Cart">🥣 Street Food Spot</option>
+            <option value="A Quiet Park / Lakeside">🌳 Park / Lakeside</option>
+            <option value="Surprise Me!">🎁 Surprise Me!</option>
+        </select>
+
+        <button class="btn-next" onclick="savePreferences()">Next 💗</button>
+    </div>
+
+    <!-- SCREEN 3.5: User Details -->
+    <div class="card" id="screen3_5">
+        <h2>✍️ Tell me about you...</h2>
+        <label for="user-name">Your Name:</label>
+        <input type="text" id="user-name" placeholder="Enter your name" required>
+
+        <label for="user-contact">Contact Info (Phone/Insta):</label>
+        <input type="text" id="user-contact" placeholder="How can I reach you?" required>
+
+        <button class="btn-next" onclick="showSummaryAndSend()">Confirm & Send 💌</button>
     </div>
 
     <!-- SCREEN 4: Confirmation -->
     <div class="card" id="screen4">
         <h2>YAY!! 💕</h2>
         <div class="summary">
-            <p>📅 <span id="final-date"></span></p>
-            <p>⏰ <span id="final-time"></span></p>
-            <p>🍽️ <span id="final-food"></span></p>
+            <p>👤 <b>From:</b> <span id="final-name"></span></p>
+            <p>📅 <b>Date:</b> <span id="final-date"></span></p>
+            <p>⏰ <b>Time:</b> <span id="final-time"></span></p>
+            <p>🍽️ <b>Food:</b> <span id="final-food"></span></p>
+            <p>📍 <b>Place:</b> <span id="final-location"></span></p>
         </div>
         <h3>I can't wait to see you! 🌷✨</h3>
         <p id="status" class="status-msg">Sending details to Shahadat... 💌</p>
@@ -187,11 +218,18 @@
     <script>
         function nextScreen(screenNum) {
             document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
-            document.getElementById('screen' + screenNum).classList.add('active');
+            
+            // Handle fractional screen numbers like 3.5
+            let targetId = 'screen' + screenNum;
+            if(screenNum === 3.5) targetId = 'screen3_5';
+            
+            document.getElementById(targetId).classList.add('active');
         }
 
         let selectedDate = "";
         let selectedTime = "";
+        let selectedFood = "";
+        let selectedLocation = "";
 
         function saveDateTime() {
             const dateVal = document.getElementById('date-input').value;
@@ -214,25 +252,42 @@
             nextScreen(3);
         }
 
+        function savePreferences() {
+            selectedFood = document.getElementById('food-select').value;
+            selectedLocation = document.getElementById('location-select').value;
+            nextScreen(3.5); // Move to Details screen
+        }
+
         function showSummaryAndSend() {
-            const foodVal = document.getElementById('food-select').value;
+            const userName = document.getElementById('user-name').value.trim();
+            const userContact = document.getElementById('user-contact').value.trim();
+
+            if(!userName || !userContact) {
+                alert("অনুগ্রহ করে আপনার নাম এবং কন্টাক্ট ডিটেইলস লিখুন! 😊");
+                return;
+            }
             
+            // Set values on the summary card
+            document.getElementById('final-name').innerText = userName;
             document.getElementById('final-date').innerText = selectedDate;
             document.getElementById('final-time').innerText = selectedTime;
-            document.getElementById('final-food').innerText = foodVal;
-
-            // স্ক্রিন ৪ এ নিয়ে যাওয়া
+            document.getElementById('final-food').innerText = selectedFood;
+            document.getElementById('final-location').innerText = selectedLocation;
+     
             nextScreen(4);
 
-            // ইমেইলে ডেটা পাঠানোর ফর্ম ডাটা তৈরি
+            // FormData object creating for Formspree
             const formData = new FormData();
+            formData.append("Sender Name", userName);
+            formData.append("Sender Contact", userContact);
             formData.append("Date", selectedDate);
             formData.append("Time", selectedTime);
-            formData.append("Food Choice", foodVal);
+            formData.append("Food Choice", selectedFood);
+            formData.append("Location Preference", selectedLocation);
             formData.append("Message", "I accepted your date request! 🥰");
 
-            // Formspree API এর মাধ্যমে আপনার ইমেইলে সরাসরি সাবমিট করা
-            fetch("https://formspree.io/f/xojolpon", {
+            // Formspree API call
+            fetch("https://formspree.io/f/xknpqqbk", {
                 method: "POST",
                 body: formData,
                 headers: {
