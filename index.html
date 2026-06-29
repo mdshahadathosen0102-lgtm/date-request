@@ -82,21 +82,6 @@
             transform: scale(1.05);
         }
 
-        .btn-maps {
-            background-color: #4285F4;
-            color: white;
-            margin-bottom: 15px;
-            font-size: 14px;
-            padding: 10px 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-maps:hover {
-            background-color: #357ae8;
-        }
-
         .btn-no {
             background-color: #ff8a80;
             color: white;
@@ -145,7 +130,7 @@
             margin: 8px 0;
             font-size: 15px;
             color: #444;
-            word-break: break-all;
+            word-break: break-word;
         }
 
         .footer-note {
@@ -161,9 +146,58 @@
             margin-top: 10px;
             font-weight: bold;
         }
+
+        /* --- Custom Alert Box Styling --- */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .custom-alert {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 320px;
+            width: 85%;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .custom-alert p {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .custom-alert button {
+            padding: 10px 25px;
+            font-size: 14px;
+            background-color: #e91e63;
+            color: white;
+            border-radius: 20px;
+        }
     </style>
 </head>
 <body>
+
+    <!-- CUSTOM ALERT POPUP -->
+    <div class="custom-alert-overlay" id="alertModal">
+        <div class="custom-alert">
+            <p id="alertMessage">অনুগ্রহ করে তথ্য দিন! 😊</p>
+            <button onclick="closeAlert()">ঠিক আছে</button>
+        </div>
+    </div>
 
     <!-- SCREEN 1: Proposal -->
     <div class="card active" id="screen1">
@@ -200,20 +234,17 @@
         <button class="btn-next" onclick="saveFoodPreference()">Next 💗</button>
     </div>
 
-    <!-- SCREEN 3.5: Maps Location & Optional Info -->
+    <!-- SCREEN 3.5: Text Location & Optional Info -->
     <div class="card" id="screen3_5">
         <h2>📍 Where are we going?</h2>
-        <p style="font-size: 13px; color: #666; margin-bottom: 10px;">গুগল ম্যাপস থেকে আপনার পছন্দের জায়গার লিংকটি কপি করে এনে নিচের বক্সে পেস্ট করুন।</p>
         
-        <button class="btn-maps" onclick="window.open('https://www.google.com/maps', '_blank')">📍 Open Google Maps</button>
-
-        <label for="maps-link">Google Maps Link:</label>
-        <input type="text" id="maps-link" placeholder="Paste the map share link here" required>
+        <label for="location-input">কোথায় দেখা করতে চাও অথবা তোমার পছন্দের লোকেশন:</label>
+        <input type="text" id="location-input" placeholder="যেমন: ধানমন্ডি রবীন্দ্র সরোবর / কোনো ক্যাফে" required>
 
         <label for="optional-note">Additional Note (Optional):</label>
-        <textarea id="optional-note" placeholder="Any specific requirements or instructions? (e.g. Roof-top/Outdoor)"></textarea>
+        <textarea id="optional-note" placeholder="বাড়তি কিছু বলার থাকলে এখানে লিখতে পারো..."></textarea>
 
-        <button class="btn-next" onclick="saveLocationAndDetails()">Confirm & Send 💌</button>
+        <button class="btn-next" onclick="saveLocationAndDetails()">Confirm 💌</button>
     </div>
 
     <!-- SCREEN 3.6: User Name Only -->
@@ -233,7 +264,7 @@
             <p>📅 <b>Date:</b> <span id="final-date"></span></p>
             <p>⏰ <b>Time:</b> <span id="final-time"></span></p>
             <p>🍽️ <b>Food:</b> <span id="final-food"></span></p>
-            <p>📍 <b>Map Link:</b> <a id="final-maps-url" href="#" target="_blank" style="color: #e91e63; font-weight: bold;">Click to view location 🗺️</a></p>
+            <p>📍 <b>Location:</b> <span id="final-location"></span></p>
             <p>📝 <b>Note:</b> <span id="final-note"></span></p>
         </div>
         <h3>I can't wait to see you! 🌷✨</h3>
@@ -242,6 +273,15 @@
     </div>
 
     <script>
+        // Custom Alert Functions
+        function showAlert(msg) {
+            document.getElementById('alertMessage').innerText = msg;
+            document.getElementById('alertModal').style.display = 'flex';
+        }
+        function closeAlert() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+
         function nextScreen(screenNum) {
             document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
             
@@ -255,7 +295,7 @@
         let selectedDate = "";
         let selectedTime = "";
         let selectedFood = "";
-        let selectedMapLink = "";
+        let selectedLocation = "";
         let selectedNote = "";
 
         function saveDateTime() {
@@ -263,7 +303,7 @@
             const timeVal = document.getElementById('time-input').value;
 
             if(!dateVal || !timeVal) {
-                alert("অনুগ্রহ করে ডেট এবং টাইম সিলেক্ট করুন! 😊");
+                showAlert("অনুগ্রহ করে ডেট এবং টাইম সিলেক্ট করুন! 😊");
                 return;
             }
 
@@ -285,12 +325,12 @@
         }
 
         function saveLocationAndDetails() {
-            const mapLinkVal = document.getElementById('maps-link').value.trim();
-            if(!mapLinkVal) {
-                alert("অনুগ্রহ করে গুগল ম্যাপসের লিংকটি পেস্ট করুন! 😊");
+            const locationVal = document.getElementById('location-input').value.trim();
+            if(!locationVal) {
+                showAlert("অনুগ্রহ করে একটি লোকেশন বা জায়গার নাম লিখুন! 😊");
                 return;
             }
-            selectedMapLink = mapLinkVal;
+            selectedLocation = locationVal;
             selectedNote = document.getElementById('optional-note').value.trim() || "No special notes";
             nextScreen(3.6);
         }
@@ -299,31 +339,28 @@
             const userName = document.getElementById('user-name').value.trim();
 
             if(!userName) {
-                alert("অনুগ্রহ করে আপনার নাম লিখুন! 😊");
+                showAlert("অনুগ্রহ করে আপনার নাম লিখুন! 😊");
                 return;
             }
             
-            // Set values on the summary card
             document.getElementById('final-name').innerText = userName;
             document.getElementById('final-date').innerText = selectedDate;
             document.getElementById('final-time').innerText = selectedTime;
             document.getElementById('final-food').innerText = selectedFood;
-            document.getElementById('final-maps-url').href = selectedMapLink;
+            document.getElementById('final-location').innerText = selectedLocation;
             document.getElementById('final-note').innerText = selectedNote;
      
             nextScreen(4);
 
-            // FormData object creating for Formspree
             const formData = new FormData();
             formData.append("Sender Name", userName);
             formData.append("Date", selectedDate);
             formData.append("Time", selectedTime);
             formData.append("Food Choice", selectedFood);
-            formData.append("Google Maps Link", selectedMapLink);
+            formData.append("Chosen Location", selectedLocation);
             formData.append("Optional Note", selectedNote);
             formData.append("Message", "I accepted your date request! 🥰");
 
-            // Formspree API call
             fetch("https://formspree.io/f/mvzjqdnr", {
                 method: "POST",
                 body: formData,
