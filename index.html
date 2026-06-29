@@ -82,6 +82,21 @@
             transform: scale(1.05);
         }
 
+        .btn-maps {
+            background-color: #4285F4;
+            color: white;
+            margin-bottom: 15px;
+            font-size: 14px;
+            padding: 10px 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-maps:hover {
+            background-color: #357ae8;
+        }
+
         .btn-no {
             background-color: #ff8a80;
             color: white;
@@ -94,14 +109,20 @@
             transform: scale(1.05);
         }
 
-        input[type="date"], input[type="time"], input[type="text"], select {
+        input[type="date"], input[type="time"], input[type="text"], select, textarea {
             width: 100%;
             padding: 12px;
             margin: 5px 0 15px 0;
             border: 2px solid #f8bbd0;
             border-radius: 10px;
             outline: none;
-            font-size: 16px;
+            font-size: 15px;
+        }
+
+        textarea {
+            resize: none;
+            height: 70px;
+            font-family: inherit;
         }
 
         label {
@@ -124,6 +145,7 @@
             margin: 8px 0;
             font-size: 15px;
             color: #444;
+            word-break: break-all;
         }
 
         .footer-note {
@@ -164,9 +186,9 @@
         <button class="btn-next" onclick="saveDateTime()">Set the date 💖</button>
     </div>
 
-    <!-- SCREEN 3: Food & Location Choice -->
+    <!-- SCREEN 3: Food Choice -->
     <div class="card" id="screen3">
-        <h2>🍽️✨ What are we doing?</h2>
+        <h2>🍽️✨ What are we eating?</h2>
         <label for="food-select">Choose food item:</label>
         <select id="food-select">
             <option value="🍕 Pizza">🍕 Pizza</option>
@@ -175,29 +197,32 @@
             <option value="🫖 Tea">🫖 Tea</option>
             <option value="🥣 Fuchka">🥣 Fuchka</option>
         </select>
-
-        <label for="location-select">Choose a place:</label>
-        <select id="location-select">
-            <option value="A Cozy Cafe">☕ A Cozy Cafe</option>
-            <option value="Rooftop Restaurant">🏙️ Rooftop Restaurant</option>
-            <option value="Street Food Cart">🥣 Street Food Spot</option>
-            <option value="A Quiet Park / Lakeside">🌳 Park / Lakeside</option>
-            <option value="Surprise Me!">🎁 Surprise Me!</option>
-        </select>
-
-        <button class="btn-next" onclick="savePreferences()">Next 💗</button>
+        <button class="btn-next" onclick="saveFoodPreference()">Next 💗</button>
     </div>
 
-    <!-- SCREEN 3.5: User Details -->
+    <!-- SCREEN 3.5: Maps Location & Optional Info -->
     <div class="card" id="screen3_5">
-        <h2>✍️ Tell me about you...</h2>
+        <h2>📍 Where are we going?</h2>
+        <p style="font-size: 13px; color: #666; margin-bottom: 10px;">গুগল ম্যাপস থেকে আপনার পছন্দের জায়গার লিংকটি কপি করে এনে নিচের বক্সে পেস্ট করুন।</p>
+        
+        <button class="btn-maps" onclick="window.open('https://www.google.com/maps', '_blank')">📍 Open Google Maps</button>
+
+        <label for="maps-link">Google Maps Link:</label>
+        <input type="text" id="maps-link" placeholder="Paste the map share link here" required>
+
+        <label for="optional-note">Additional Note (Optional):</label>
+        <textarea id="optional-note" placeholder="Any specific requirements or instructions? (e.g. Roof-top/Outdoor)"></textarea>
+
+        <button class="btn-next" onclick="saveLocationAndDetails()">Confirm & Send 💌</button>
+    </div>
+
+    <!-- SCREEN 3.6: User Name Only -->
+    <div class="card" id="screen3_6">
+        <h2>✍️ Almost Done...</h2>
         <label for="user-name">Your Name:</label>
         <input type="text" id="user-name" placeholder="Enter your name" required>
 
-        <label for="user-contact">Contact Info (Phone/Insta):</label>
-        <input type="text" id="user-contact" placeholder="How can I reach you?" required>
-
-        <button class="btn-next" onclick="showSummaryAndSend()">Confirm & Send 💌</button>
+        <button class="btn-next" onclick="showSummaryAndSend()">Finalize ✨</button>
     </div>
 
     <!-- SCREEN 4: Confirmation -->
@@ -208,7 +233,8 @@
             <p>📅 <b>Date:</b> <span id="final-date"></span></p>
             <p>⏰ <b>Time:</b> <span id="final-time"></span></p>
             <p>🍽️ <b>Food:</b> <span id="final-food"></span></p>
-            <p>📍 <b>Place:</b> <span id="final-location"></span></p>
+            <p>📍 <b>Map Link:</b> <a id="final-maps-url" href="#" target="_blank" style="color: #e91e63; font-weight: bold;">Click to view location 🗺️</a></p>
+            <p>📝 <b>Note:</b> <span id="final-note"></span></p>
         </div>
         <h3>I can't wait to see you! 🌷✨</h3>
         <p id="status" class="status-msg">Sending details to Shahadat... 💌</p>
@@ -219,9 +245,9 @@
         function nextScreen(screenNum) {
             document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
             
-            // Handle fractional screen numbers like 3.5
             let targetId = 'screen' + screenNum;
             if(screenNum === 3.5) targetId = 'screen3_5';
+            if(screenNum === 3.6) targetId = 'screen3_6';
             
             document.getElementById(targetId).classList.add('active');
         }
@@ -229,7 +255,8 @@
         let selectedDate = "";
         let selectedTime = "";
         let selectedFood = "";
-        let selectedLocation = "";
+        let selectedMapLink = "";
+        let selectedNote = "";
 
         function saveDateTime() {
             const dateVal = document.getElementById('date-input').value;
@@ -252,18 +279,27 @@
             nextScreen(3);
         }
 
-        function savePreferences() {
+        function saveFoodPreference() {
             selectedFood = document.getElementById('food-select').value;
-            selectedLocation = document.getElementById('location-select').value;
-            nextScreen(3.5); // Move to Details screen
+            nextScreen(3.5);
+        }
+
+        function saveLocationAndDetails() {
+            const mapLinkVal = document.getElementById('maps-link').value.trim();
+            if(!mapLinkVal) {
+                alert("অনুগ্রহ করে গুগল ম্যাপসের লিংকটি পেস্ট করুন! 😊");
+                return;
+            }
+            selectedMapLink = mapLinkVal;
+            selectedNote = document.getElementById('optional-note').value.trim() || "No special notes";
+            nextScreen(3.6);
         }
 
         function showSummaryAndSend() {
             const userName = document.getElementById('user-name').value.trim();
-            const userContact = document.getElementById('user-contact').value.trim();
 
-            if(!userName || !userContact) {
-                alert("অনুগ্রহ করে আপনার নাম এবং কন্টাক্ট ডিটেইলস লিখুন! 😊");
+            if(!userName) {
+                alert("অনুগ্রহ করে আপনার নাম লিখুন! 😊");
                 return;
             }
             
@@ -272,22 +308,23 @@
             document.getElementById('final-date').innerText = selectedDate;
             document.getElementById('final-time').innerText = selectedTime;
             document.getElementById('final-food').innerText = selectedFood;
-            document.getElementById('final-location').innerText = selectedLocation;
+            document.getElementById('final-maps-url').href = selectedMapLink;
+            document.getElementById('final-note').innerText = selectedNote;
      
             nextScreen(4);
 
             // FormData object creating for Formspree
             const formData = new FormData();
             formData.append("Sender Name", userName);
-            formData.append("Sender Contact", userContact);
             formData.append("Date", selectedDate);
             formData.append("Time", selectedTime);
             formData.append("Food Choice", selectedFood);
-            formData.append("Location Preference", selectedLocation);
+            formData.append("Google Maps Link", selectedMapLink);
+            formData.append("Optional Note", selectedNote);
             formData.append("Message", "I accepted your date request! 🥰");
 
             // Formspree API call
-            fetch("https://formspree.io/f/xknpqqbk", {
+            fetch("https://formspree.io/f/mvzjqdnr", {
                 method: "POST",
                 body: formData,
                 headers: {
